@@ -6,10 +6,33 @@ state_dir="${COPILOT_SANDBOX_STATE_DIR:-${HOME}/.local/share/copilot-sandbox}"
 workspace_dir="${COPILOT_SANDBOX_WORKSPACE:-${PWD}}"
 volume_suffix="${PODMAN_VOLUME_SUFFIX:-}"
 disable_gpu="${COPILOT_SANDBOX_DISABLE_GPU:-0}"
+use_host_network="${COPILOT_SANDBOX_USE_HOST_NETWORK:-0}"
+copilot_provider_base_url="${COPILOT_PROVIDER_BASE_URL:-}"
 
 die() {
     printf 'error: %s\n' "$1" >&2
     exit 1
+}
+
+pass_env_if_set() {
+    local name="$1"
+
+    if [[ -n "${!name:-}" ]]; then
+        podman_args+=(
+            -e
+            "${name}=${!name}"
+        )
+    fi
+}
+
+requires_host_network() {
+    local url="$1"
+
+    if [[ "${use_host_network}" == "1" ]]; then
+        return 0
+    fi
+
+    [[ "${url}" =~ ^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])([/:]|$) ]]
 }
 
 gpu_ready() {
@@ -75,6 +98,17 @@ podman_args=(
     -w
     /workspace
 )
+
+for env_name in COPILOT_PROVIDER_BASE_URL COPILOT_PROVIDER_TYPE COPILOT_PROVIDER_API_KEY COPILOT_MODEL COPILOT_OFFLINE; do
+    pass_env_if_set "${env_name}"
+done
+
+if requires_host_network "${copilot_provider_base_url}"; then
+    podman_args+=(
+        --network
+        host
+    )
+fi
 
 if [[ -f "${HOME}/.gitconfig" ]]; then
     podman_args+=(

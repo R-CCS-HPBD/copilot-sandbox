@@ -1,0 +1,57 @@
+services:
+  sandbox:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: ${COPILOT_SANDBOX_IMAGE:-copilot-gpu-sandbox:latest}
+    hostname: copilot-gpu-sandbox
+    stdin_open: true
+    tty: true
+    working_dir: /workspace
+    command:
+      - bash
+    environment:
+      HOME: /home/copilot
+      TERM: ${TERM:-xterm-256color}
+      COLORTERM: ${COLORTERM:-truecolor}
+      CLICOLOR_FORCE: "1"
+      COPILOT_PROVIDER_TYPE: ${COPILOT_PROVIDER_TYPE:-openai}
+      COPILOT_PROVIDER_BASE_URL: ${COPILOT_PROVIDER_BASE_URL:-http://vllm:8000/v1}
+      COPILOT_MODEL: ${COPILOT_MODEL:-local-model}
+      COPILOT_OFFLINE: ${COPILOT_OFFLINE:-false}
+    volumes:
+      - ${WORKSPACE:-.}:/workspace:rw${PODMAN_VOLUME_SUFFIX:-}
+      - copilot_state:/home/copilot/.copilot
+      - gh_state:/home/copilot/.config/gh
+    devices:
+      - nvidia.com/gpu=all
+
+  vllm:
+    image: ${VLLM_IMAGE:-docker.io/vllm/vllm-openai:latest}
+    container_name: ${VLLM_CONTAINER_NAME:-copilot-sandbox-vllm}
+    hostname: ${VLLM_CONTAINER_NAME:-copilot-sandbox-vllm}
+    command:
+      - --model
+      - ${VLLM_MODEL:?set VLLM_MODEL before starting the compose stack}
+      - --served-model-name
+      - ${COPILOT_MODEL:-local-model}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    environment:
+      HF_HOME: /root/.cache/huggingface
+      HF_TOKEN: ${HF_TOKEN:-}
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+      HUGGINGFACE_HUB_TOKEN: ${HUGGINGFACE_HUB_TOKEN:-}
+    ports:
+      - 127.0.0.1:${VLLM_PORT:-8000}:8000
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    devices:
+      - nvidia.com/gpu=all
+
+volumes:
+  copilot_state:
+  gh_state:
+  hf_cache:
