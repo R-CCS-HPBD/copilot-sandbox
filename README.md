@@ -8,7 +8,7 @@ Important:
 
 - GitHub Copilot CLI itself does not use the GPU for inference.
 - The GPU is for workloads executed inside the sandbox by the agent or by the user.
-- If you want Copilot CLI to call a local model, this repository now supports GitHub Copilot CLI BYOK against a local vLLM OpenAI-compatible endpoint.
+- If you want Copilot CLI to call a local model, this repository now supports GitHub Copilot CLI BYOM against a local vLLM OpenAI-compatible endpoint.
 
 ## One End-to-End Example
 
@@ -87,9 +87,9 @@ GitHub Mobile example:
 - GitHub Mobile remote control is in public preview. Changelog: [Remote control CLI sessions on web and mobile in public preview](https://github.blog/changelog/2026-04-13-remote-control-cli-sessions-on-web-and-mobile-in-public-preview)
 - Remote access docs: [About remote access for GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-remote-access)
 
-## Local vLLM BYOK Workflow
+## Local vLLM BYOM Workflow
 
-GitHub Copilot CLI can use your own model provider by setting the standard BYOK environment variables documented by GitHub:
+GitHub Copilot CLI can use your own model provider by setting the standard BYOM environment variables documented by GitHub:
 
 - `COPILOT_PROVIDER_BASE_URL`
 - `COPILOT_PROVIDER_TYPE`
@@ -99,7 +99,7 @@ GitHub Copilot CLI can use your own model provider by setting the standard BYOK 
 
 For vLLM, the provider type is `openai`, because vLLM exposes an OpenAI-compatible Chat Completions API. The model must support streaming and tool calling. A larger context window is strongly recommended.
 
-This repository adds a local vLLM sidecar plus wrappers that export the official Copilot BYOK variables for you.
+This repository adds a local vLLM sidecar plus wrappers that export the official Copilot BYOM variables for you.
 
 1. Start the vLLM server on the host.
 
@@ -142,7 +142,7 @@ make remote-detached-vllm WORKSPACE=/home/alice/src/my-app SESSION_NAME=my-app-l
 make vllm-stop
 ```
 
-If you already run your own local or on-prem OpenAI-compatible endpoint, you can skip `make vllm` and set the GitHub BYOK environment variables yourself before `make shell`, `make remote`, or `make remote-detached`. The sandbox runner now passes those variables through and automatically switches to host networking when the provider URL points at `localhost`, `127.0.0.1`, or another loopback address.
+If you already run your own local or on-prem OpenAI-compatible endpoint, you can skip `make vllm` and set the GitHub BYOM environment variables yourself before `make shell`, `make remote`, or `make remote-detached`. The sandbox runner now passes those variables through and automatically switches to host networking when the provider URL points at `localhost`, `127.0.0.1`, or another loopback address.
 
 ## Compose Workflow
 
@@ -208,7 +208,7 @@ Notes:
 - `scripts/copilot-remote.sh`: Start GitHub Copilot CLI in remote-session mode inside the sandbox.
 - `scripts/remote-detached.sh`: Start GitHub Copilot CLI in remote-session mode inside detached `tmux`.
 - `scripts/run-vllm.sh`: Start a detached local vLLM OpenAI-compatible endpoint with Podman.
-- `scripts/use-vllm-byok.sh`: Export the Copilot CLI BYOK variables for the local vLLM endpoint.
+- `scripts/use-vllm-byok.sh`: Export the Copilot CLI BYOM variables for the local vLLM endpoint.
 - `scripts/smoke-test.sh`: Verify the full stack after build.
 - `Makefile`: Shortcuts for the common commands.
 
@@ -292,7 +292,7 @@ Environment variables supported by the helper scripts:
 - `COPILOT_SANDBOX_STATE_DIR`: persistent host state directory
 - `COPILOT_SANDBOX_WORKSPACE`: host workspace to mount into `/workspace`
 - `COPILOT_SANDBOX_DISABLE_GPU=1`: run without GPU passthrough
-- `COPILOT_SANDBOX_USE_HOST_NETWORK=1`: force `podman run --network host`, useful for local BYOK endpoints
+- `COPILOT_SANDBOX_USE_HOST_NETWORK=1`: force `podman run --network host`, useful for local BYOM endpoints
 - `PODMAN_VOLUME_SUFFIX`: optional Podman mount suffix such as `:Z` on SELinux hosts
 
 Environment variables supported by the local vLLM helper:
@@ -327,10 +327,10 @@ The repository includes a small `Makefile` so colleagues can use short commands:
 - `make vllm` -> start the local vLLM service in a detached Podman container
 - `make vllm-logs` -> tail the local vLLM logs
 - `make vllm-stop` -> stop and remove the local vLLM container
-- `make shell-vllm` -> open shell inside sandbox configured for local vLLM BYOK
+- `make shell-vllm` -> open shell inside sandbox configured for local vLLM BYOM
 - `make remote-vllm` -> start Copilot CLI with `--remote` against local vLLM
 - `make remote-detached-vllm` -> detached `tmux` remote session against local vLLM
-- `make smoke-vllm` -> run the smoke test with the local vLLM BYOK wrapper enabled
+- `make smoke-vllm` -> run the smoke test with the local vLLM BYOM wrapper enabled
 - `make compose-build` -> build the sandbox image for the Compose stack
 - `make compose-up` -> start the Compose-managed vLLM service
 - `make compose-shell` -> open an interactive shell in the Compose-managed sandbox container
